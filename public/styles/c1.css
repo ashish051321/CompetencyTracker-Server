@@ -1,0 +1,170 @@
+body{
+  background: #ecf0f1;
+  background-image: url('http://www.planwallpaper.com/static/images/maxresdefault.jpg');
+  font-weight: bold;
+}
+
+header{
+  height:44px;
+  background: rgba(0, 0, 0, 0.63);
+  color:#ecf0f1;
+  text-align:center;
+  font-family: Calibri;
+  font-size:1.6em;
+  line-height: 44px;
+  font-weight: lighter;
+}
+
+/**********************calendar specific styling****************************/
+.maincontainer{
+  display:flex;
+  margin: 0 auto;
+  margin-top: 10px;
+   justify-content: center;
+}
+.monthyearContainer{
+width:320px;
+background-color: rgba(155, 89, 182, 0.73);
+display:flex;
+justify-content: space-around;
+align-items: center;
+}
+
+
+
+.calendar{
+width:320px;
+/*height:320px;*/
+margin: 0 auto;
+background-color: rgba(155, 89, 182, 0.73);
+}
+
+.calendardayrow{
+    /*background: lightgrey;*/
+}
+
+.calmonthyear{
+  height:40px;
+  line-height:40px;
+  text-align: center;
+}
+
+.calendar::after {
+   content: " ";
+   display: block;
+   height: 0;
+   clear: both;
+}
+
+.calendar>.calentry{
+width:40px;
+height:40px;
+line-height:40px;
+text-align: center;
+border-radius:50%;
+background: orange;
+display: block;
+float:left;
+margin-right:5px;
+margin-top:5px;
+margin-bottom:5px;
+}
+
+.calendar>.calentry:nth-of-type(7n+1){
+  margin-left:5px;
+}
+
+.calendar>.calentrydisabled{
+  background-color: rgba(155, 89, 182, 0);
+}
+
+.calendar>.calday{
+  border-radius: 5px 20px 5px;
+  background: #BADA55;
+}
+.monthyearPrev, .monthyearNext,.calentryactive{
+cursor:pointer;
+}
+
+.calendardates>.todaydate{
+background:rgba(0, 194, 255, 0.87);
+}
+
+/***********************************************************************/
+
+.todaybutton{
+  display:block;
+  margin: 0 auto;
+  background: rgba(0, 194, 255, 0.87);
+  width:320px;
+  height:25px;
+}
+
+@media  (max-width: 520px)  {
+header{
+  font-size:1.2em;
+}
+}
+/*scheduling styling********************/
+.schedulediv{
+  display:flex;
+  flex-direction: column;
+  background: #e74c3c;
+  margin-left:20px;
+  width:325px;
+  border: 1px solid black;
+}
+
+.schedulediv>.scheduledate{
+width:325px;
+text-align:center;
+height:40px;
+line-height: 40px;
+border-bottom: 1px solid black;
+}
+
+.schedulediv>.bookedschedule{
+  display:flex;
+  flex-direction: column;
+  height:150px;
+  overflow-y: auto;
+}
+
+.schedulediv>.bookedschedule>.childschedule{
+height:30px;
+line-height: 30px;
+text-align: left;
+}
+
+.schedulediv>.timerange{
+display:flex;
+flex-direction: column;
+height:200px;
+overflow-y: scroll;
+}
+
+/*For alternate coloring*/
+.timecolor1{
+background: #16a085;
+}
+
+.timecolor2{
+background: #f1c40f;
+}
+
+.schedulediv>.timerange>.onehourinterval{
+height:84px;
+border-bottom: 1px solid red;
+}
+
+.schedulediv>.timerange>.onehourinterval>.min15interval{
+border-bottom: 1px solid black;
+height:20px;
+line-height: 20px;
+box-sizing: border:box;
+padding-left:2px;
+}
+
+.schedulediv>.timerange>.onehourinterval>.min15interval:nth-of-type(4){
+  border-bottom: 0px solid black;
+}

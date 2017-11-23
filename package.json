@@ -1,0 +1,21 @@
+{
+  "name": "nodeserverapp",
+  "version": "1.0.0",
+  "description": "My server for Competency Tracker",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ashish Mishra",
+  "license": "MIT",
+  "devDependencies": {
+    "body-parser": "^1.18.2",
+    "express": "^4.15.4",
+    "express-formidable": "^1.0.0",
+    "express-validator": "^4.2.0",
+    "mongoose": "^4.11.12",
+    "node-xlsx": "^0.11.0",
+    "serve-favicon": "^2.4.4",
+    "xlsx": "^0.11.5"
+  }
+}

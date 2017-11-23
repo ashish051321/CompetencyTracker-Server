@@ -1,0 +1,19 @@
+body{
+  background: url("/images/HE.jpg");
+}
+
+div.mycontainer{
+   width: 325px;
+   min-width: 325px;
+  margin: 0 auto;
+  display:flex;
+  margin-top:40px;
+  padding:10px;
+  background: rgba(8, 8, 8, 0.39);
+  color: #bdc3c7
+}
+
+
+div.mycontainer > .child1{
+  /*flex:1;*/
+}
