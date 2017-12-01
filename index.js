@@ -26,6 +26,16 @@ const util = require('util');
 const app = express(); //this is the start of use of express framework
 
 
+var presentMasterList = null;//for competency, certification, managers and  projects.
+//I will update the presentMassterList during uploads
+//we will have them in:-
+/*
+presentMasterList.competency = [{}]
+presentMasterList.certification = []
+presentMasterList.mangers = []
+presentMasterList.projects = []
+
+*/
 
 // Add headers
 app.use(function (req, res, next) {
@@ -169,8 +179,97 @@ app.get('/deleteassociate', function (req, res) {
 
 }); // getallassociates ends
 
+//-----------------
+function getPresentMasterList() {
+    // this.presentMasterList needs to be updated
+    //I will update the presentMassterList during uploads
+    //we will have them in:-
+    /*
+    presentMasterList.competency = [{}]
+    presentMasterList.certification = [{}]
+    presentMasterList.mangers = [{}]
+    presentMasterList.projects = [{}]
+    */
+    return new Promise((resolve, reject) => {
 
+        let p1 = new Promise((res, rej) => {
+            //getting certifications
+            Certification.find(function (err, certs) {
+                if (err) {
+                    console.log(err);
+                    rej(err);
+                }
+                // console.log(user);//here we are getting an array of objects. Thanks Mongoose :)
+                //certs is an array of objects
+                this.presentMasterList.certifications = certs;
+                res("done");
+            });
+        });//p1 ends
+
+
+        let p2 = new Promise((res, rej) => {
+            //getting competencies
+            Competency.find(function (err, comps) {
+                if (err) {
+                    console.log(err);
+                    rej(err);
+                }
+                // console.log(user);//here we are getting an array of objects. Thanks Mongoose :)
+                //certs is an array of objects
+                this.presentMasterList.competencies = comps;
+                res("done");
+            });
+        });//p2 ends
+
+
+        let p3 = new Promise((res, rej) => {
+            //getting projects
+            Project.find(function (err, projs) {
+                if (err) {
+                    console.log(err);
+                    rej("err");
+                }
+                // console.log(user);//here we are getting an array of objects. Thanks Mongoose :)
+                //certs is an array of objects
+                this.presentMasterList.projects = projs;
+                res("done");
+            });
+        });//p3 ends
+
+
+        let p4 = new Promise((res, rej) => {
+            //getting managers
+            Manager.find(function (err, mgrs) {
+                if (err) {
+                    console.log(err);
+                    rej("err");
+                }
+                // console.log(user);//here we are getting an array of objects. Thanks Mongoose :)
+                //certs is an array of objects
+                this.presentMasterList.managers = mgrs;
+                res("done");
+            });
+        });//p4 ends
+
+
+
+
+        Promise.all(p1,p2,p3,p4).then()
+
+    });
+
+
+}// getPresentMasterList function
+
+
+
+//---------------
 app.post('/bulkupload', function (req, res) {
+
+    //update my presentMasterList
+    getPresentMasterList();
+
+
 
 
     // create an incoming form object
@@ -188,7 +287,9 @@ app.post('/bulkupload', function (req, res) {
         fs.rename(file.path, path.join(form.uploadDir, file.name));
         console.log("File Saved: " + file.name);
         setTimeout(function () {
-            readExcel(file.name);
+
+            readExcel(file.name);//custom function to read the employee excel
+
         }, 2000);
     });
 
@@ -265,18 +366,45 @@ function readExcel(filename) {
         }
 
         //send for insertion into database
-        insertIntoDatabase(tempObj);
+        insertAssociateIntoDatabase(tempObj);
+
+        updateCompCertInDB(tempObj);
 
     } //for loop iterating over all entries in excel - Ends
 
 
 } //readExcel function ends
 
+/* --------------------------------------------------------------------------------- */
+//competency and certification adder
+//The aim of this function is to look the associate info being uploaded from the excel and 
+// if there is a new competency or certification, that is not laready present in the DB, then add that to the DB.
+
+function updateCompCertInDB(associateObject) {
+
+    //grab the present certifications    
+
+
+    Certification.find(function (err, certs) {
+        if (err) {
+            console.log(err);
+        }
+        // console.log(user);//here we are getting an array of objects. Thanks Mongoose :)
+        //certs is an array of objects
+        presentCerts = certs;
+
+    });
+
+
+
+}
+
+
 
 
 /* --------------------------------------------------------------------------------- */
 
-function insertIntoDatabase(associate) //this is an object with all the fields as requried in Associate schema
+function insertAssociateIntoDatabase(associate) //this is an object with all the fields as requried in Associate schema
 {
     //before inserting we just need to check if the empid is already present in the database.
     // if empid is already present, then the entry is skipped.
@@ -296,7 +424,7 @@ function insertIntoDatabase(associate) //this is an object with all the fields a
     });
 
 
-} //insertIntoDatabase function ends
+} //insertAssociateIntoDatabase function ends
 
 
 
@@ -692,12 +820,12 @@ app.post('/deletecert', function (req, res) {
 
 app.get('/getallcerts', function (req, res) {
 
-    Certification.find(function (err, user) {
+    Certification.find(function (err, certs) {
         if (err) {
             res.send(err);
         }
         // console.log(user);//here we are getting an array of objects. Thanks Mongoose :)
-        res.json(user);
+        res.json(certs);
 
     });
 
