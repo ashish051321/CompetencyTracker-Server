@@ -190,6 +190,7 @@ function getPresentMasterList() {
     presentMasterList.mangers = [{}]
     presentMasterList.projects = [{}]
     */
+    this.presentMasterList = {};
     return new Promise((resolve, reject) => {
 
         let p1 = new Promise((res, rej) => {
@@ -251,10 +252,10 @@ function getPresentMasterList() {
             });
         });//p4 ends
 
-
-
-
-        Promise.all(p1,p2,p3,p4).then()
+        Promise.all([p1, p2, p3, p4]).then(
+            values => { resolve(values); },
+            reason => { reject(reason); }
+        );
 
     });
 
@@ -266,46 +267,51 @@ function getPresentMasterList() {
 //---------------
 app.post('/bulkupload', function (req, res) {
 
-    //update my presentMasterList
-    getPresentMasterList();
+    //update my presentMasterList and then do anything else
+    getPresentMasterList().then((val) => {
+        console.log(val + "--------");
+
+        // create an incoming form object
+        var form = new formidable.IncomingForm();
+
+        // specify that we want to allow the user to upload multiple files in a single request
+        form.multiples = false;
+
+        // store all uploads in the /uploads directory
+        form.uploadDir = path.join(__dirname, '/uploads');
+
+        // every time a file has been uploaded successfully,
+        // rename it to it's orignal name
+        form.on('file', function (field, file) {
+            fs.rename(file.path, path.join(form.uploadDir, file.name));
+            console.log("File Saved: " + file.name);
+            setTimeout(function () {
+                flushTempRecords();
+                readExcel(file.name);//custom function to read the employee excel
+
+            }, 2000);
+        });
+
+        // log any errors that occur
+        form.on('error', function (err) {
+            console.log('An error has occured: \n' + err);
+        });
+
+        // once all the files have been uploaded, send a response to the client
+        form.on('end', function () {
+            res.end('success');
+        });
+
+        // parse the incoming request containing the form data
+        form.parse(req);
+        res.status(200).send("yay");
 
 
-
-
-    // create an incoming form object
-    var form = new formidable.IncomingForm();
-
-    // specify that we want to allow the user to upload multiple files in a single request
-    form.multiples = false;
-
-    // store all uploads in the /uploads directory
-    form.uploadDir = path.join(__dirname, '/uploads');
-
-    // every time a file has been uploaded successfully,
-    // rename it to it's orignal name
-    form.on('file', function (field, file) {
-        fs.rename(file.path, path.join(form.uploadDir, file.name));
-        console.log("File Saved: " + file.name);
-        setTimeout(function () {
-
-            readExcel(file.name);//custom function to read the employee excel
-
-        }, 2000);
+    }).catch(reason => {
+        console.log(reason);
     });
 
-    // log any errors that occur
-    form.on('error', function (err) {
-        console.log('An error has occured: \n' + err);
-    });
 
-    // once all the files have been uploaded, send a response to the client
-    form.on('end', function () {
-        res.end('success');
-    });
-
-    // parse the incoming request containing the form data
-    form.parse(req);
-    res.status(200).send("yay");
 
 });
 
@@ -368,32 +374,106 @@ function readExcel(filename) {
         //send for insertion into database
         insertAssociateIntoDatabase(tempObj);
 
-        updateCompCertInDB(tempObj);
-
+        updatemasterListInDB(tempObj);//now here we are confident that we have the db values with us for all new comps, certs, mgrs and projs !
     } //for loop iterating over all entries in excel - Ends
 
 
 } //readExcel function ends
 
 /* --------------------------------------------------------------------------------- */
+
+let presentUploadManagers = [];
+let presentUploadProjects = [];
+let presentUploadComps = [];
+let presentUploadCerts = [];
+
+function flushTempRecords() {
+    presentUploadManagers = [];
+    presentUploadProjects = [];
+    presentUploadComps = [];
+    presentUploadCerts = [];
+
+}
+
+
+/* --------------------------------------------------------------------------------- */
+
 //competency and certification adder
 //The aim of this function is to look the associate info being uploaded from the excel and 
 // if there is a new competency or certification, that is not laready present in the DB, then add that to the DB.
+// this.presentMasterList is where i will verifiy the non-existence of calues, and insert in DB
 
-function updateCompCertInDB(associateObject) {
+function updatemasterListInDB(associateObject) {
 
-    //grab the present certifications    
+    //check and add managers, if required !!
+    if (associateObject.manager) {
+        for (let i = 0; i < associateObject.manager.length; i++) {
+            if ((presentUploadManagers.indexOf(associateObject.manager[i].toUpperCase()) == -1) && (this.presentMasterList.managers.filter((x) => { return (x.managerName.toUpperCase() == associateObject.manager[i].toUpperCase()); }).length == 0)) {
+                //manger name did not match, hence we have a new manager
+                presentUploadManagers.push(associateObject.manager[i].toUpperCase());
+                let newManager = new Manager({ managerName: associateObject.manager[i] });
+                newManager.save(function (err) {
+                    if (err) throw err;
+                    console.log('Manager saved successfully !!!!');
+                    console.log("msg: " + "Record Updated for: " + associateObject.manager[i]);
+                });
 
-
-    Certification.find(function (err, certs) {
-        if (err) {
-            console.log(err);
+            }
         }
-        // console.log(user);//here we are getting an array of objects. Thanks Mongoose :)
-        //certs is an array of objects
-        presentCerts = certs;
+    }//if associateObject.manager
 
-    });
+    //check and add projects, if required !!
+    if (associateObject.projectname) {
+        for (let i = 0; i < associateObject.projectname.length; i++) {
+            if ((presentUploadProjects.indexOf(associateObject.projectname[i].toUpperCase()) == -1) && (this.presentMasterList.projects.filter((x) => { return (x.projectName.toUpperCase() == associateObject.projectname[i].toUpperCase()); }).length == 0)) {
+                //manger name did not match, hence we have a new manager
+                presentUploadProjects.push(associateObject.projectname[i].toUpperCase());
+                let newProject = new Project({ projectName: associateObject.projectname[i] });
+                newProject.save(function (err) {
+                    if (err) throw err;
+                    console.log('project saved successfully !!!!');
+                    console.log("msg: " + "Record Updated for: " + associateObject.projectname[i]);
+                });
+
+            }
+        }
+    }//if associateObject.projectname
+
+    //check and add competrencies , if required !!
+    if (associateObject.competencies) {
+        for (let i = 0; i < associateObject.competencies.length; i++) {
+            if ((presentUploadComps.indexOf(associateObject.competencies[i].competency.toUpperCase()) == -1) && (this.presentMasterList.competencies.filter((x) => { return (x.competencyName.toUpperCase() == associateObject.competencies[i].competency.toUpperCase()); }).length == 0)) {
+                //manger name did not match, hence we have a new manager
+                presentUploadComps.push(associateObject.competencies[i].competency.toUpperCase());
+                let newCompetency = new Competency({ competencyName: associateObject.competencies[i].competency });
+                newCompetency.save(function (err) {
+                    if (err) throw err;
+                    console.log('Competency saved successfully !!!!');
+                    console.log("msg: " + "Record Updated for: " + associateObject.competencies[i].competency);
+                });
+
+            }
+        }
+    }//if associateObject.projectname
+
+    //check and add certifications , if required !!
+    if (associateObject.certifications) {
+        for (let i = 0; i < associateObject.certifications.length; i++) {
+            if ((presentUploadCerts.indexOf(associateObject.certifications[i].certification.toUpperCase()) == -1) && (this.presentMasterList.certifications.filter((x) => { return (x.certificationName.toUpperCase() == associateObject.certifications[i].certification.toUpperCase()); }).length == 0)) {
+                //manger name did not match, hence we have a new manager
+                presentUploadCerts.push(associateObject.certifications[i].certification.toUpperCase());
+                let newCertification = new Certification({ certificationName: associateObject.certifications[i].certification });
+                newCertification.save(function (err) {
+                    if (err) throw err;
+                    console.log('Certification saved successfully !!!!');
+                    console.log("msg: " + "Record Updated for: " + associateObject.certifications[i].certification);
+                });
+
+            }
+        }
+    }//if associateObject.projectname
+
+
 
 
 
@@ -412,7 +492,7 @@ function insertAssociateIntoDatabase(associate) //this is an object with all the
         empid: associate.empid
     }, function (err, docs) {
         if (docs.length) {
-            console.log("Name exists already");
+            // console.log("Name exists already");
         } else { //save the associate
             var newAssociate = new Associate(associate);
             newAssociate.save(function (err) {
